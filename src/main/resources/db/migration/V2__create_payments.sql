@@ -7,6 +7,6 @@ CREATE TABLE payments (
     status VARCHAR(20) NOT NULL,
     reference VARCHAR(255),
     created_at TIMESTAMP NOT NULL,
-    CONSTRAINT fk_payment_from_account FOREING KEY (from_account_id) REFERENCES accounts (id),
-    CONSTRAINT fk_payment_to_account FOREING KEY (to_account_id) REFERENCES accounts (id),
+    CONSTRAINT fk_payment_from_account FOREIGN KEY (from_account_id) REFERENCES accounts (id),
+    CONSTRAINT fk_payment_to_account FOREIGN KEY (to_account_id) REFERENCES accounts (id)
 )
