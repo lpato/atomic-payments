@@ -19,20 +19,20 @@ public class AccountRepositoryImpl implements AccountRepository {
 
     @Override
     public Mono<Account> findById(AccountId accountId) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findById'");
+
+        return accountR2dbcRepository.findById(accountId.value()).map(accountMapper::toDomain);
     }
 
     @Override
     public Mono<Account> save(Account account) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'save'");
+
+        return accountR2dbcRepository.save(accountMapper.toEntity(account)).map(accountMapper::toDomain);
     }
 
     @Override
     public Flux<Account> findAll() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findAll'");
+
+        return accountR2dbcRepository.findAll().map(accountMapper::toDomain);
     }
 
 }

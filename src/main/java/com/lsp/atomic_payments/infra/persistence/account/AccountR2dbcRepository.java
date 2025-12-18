@@ -1,6 +1,7 @@
 package com.lsp.atomic_payments.infra.persistence.account;
 
-import org.hibernate.validator.constraints.UUID;
+import java.util.UUID;
+
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 
 public interface AccountR2dbcRepository

@@ -9,7 +9,14 @@ import org.springframework.data.annotation.Version;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+
 @Table("accounts")
+@Getter
+@Setter
+@RequiredArgsConstructor
 public class AccountEntity {
 
     @Id
