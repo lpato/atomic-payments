@@ -58,5 +58,8 @@ The **domain layer is framework-agnostic** and contains the core business rules.
 
 ## Running the Application
 
-```bash
+```
+docker compose up -d
 ./mvnw spring-boot:run
+```
+

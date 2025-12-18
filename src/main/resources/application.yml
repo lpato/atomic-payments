@@ -1,0 +1,11 @@
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/atomic_payments
+    username: atomic
+    password: atomic
+
+  flyway:
+    url: jdbc:postgresql://localhost:5432/atomic_payments
+    user: atomic
+    password: atomic
+    locations: classpath:db/migration
