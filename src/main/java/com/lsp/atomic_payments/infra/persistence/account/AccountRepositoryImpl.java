@@ -35,4 +35,13 @@ public class AccountRepositoryImpl implements AccountRepository {
         return accountR2dbcRepository.findAll().map(accountMapper::toDomain);
     }
 
+    @Override
+    public Mono<Account> update(Account account) {
+        AccountEntity accountEntity = accountMapper.toEntity(account);
+        accountEntity.setNew(false);
+
+        return accountR2dbcRepository.save(accountEntity).map(accountMapper::toDomain);
+
+    }
+
 }

@@ -9,6 +9,8 @@ public interface AccountRepository {
 
     Mono<Account> save(Account account);
 
+    Mono<Account> update(Account account);
+
     Flux<Account> findAll();
 
 }
