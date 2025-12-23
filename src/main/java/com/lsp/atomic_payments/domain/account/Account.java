@@ -14,4 +14,28 @@ public record Account(
         public boolean isActive() {
                 return AccountStatus.ACTIVE.equals(status);
         }
+
+        public Account debit(Money amount) {
+
+                Money newBalance = this.balance.minus(amount);
+
+                return new Account(
+                                this.accountId,
+                                this.owner,
+                                newBalance,
+                                this.status,
+                                this.createdAt);
+        }
+
+        public Account credit(Money amount) {
+
+                Money newBalance = this.balance.plus(amount);
+
+                return new Account(
+                                this.accountId,
+                                this.owner,
+                                newBalance,
+                                this.status,
+                                this.createdAt);
+        }
 }
