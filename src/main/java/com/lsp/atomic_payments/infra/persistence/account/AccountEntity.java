@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.Persistable;
@@ -53,8 +54,28 @@ public class AccountEntity implements Persistable<UUID> {
         return isNew;
     }
 
-    public void markNotNew() {
+    @PersistenceCreator
+    public AccountEntity(UUID id, String owner, BigDecimal balanceAmount, String balanceCurrency, String status,
+            Long version, Instant createdAt) {
+        this.id = id;
+        this.owner = owner;
+        this.balanceAmount = balanceAmount;
+        this.balanceCurrency = balanceCurrency;
+        this.status = status;
+        this.version = version;
+        this.createdAt = createdAt;
         this.isNew = false;
+    }
+
+    public static AccountEntity newEntity(UUID id, String owner, BigDecimal balanceAmount, String balanceCurrency,
+            String status,
+            Long version) {
+
+        AccountEntity accountEntity = new AccountEntity(id, owner, balanceAmount, balanceCurrency, status, version,
+                Instant.now());
+        accountEntity.isNew = true;
+
+        return accountEntity;
     }
 
 }
