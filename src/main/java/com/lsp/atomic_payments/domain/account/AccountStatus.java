@@ -1,5 +1,5 @@
 package com.lsp.atomic_payments.domain.account;
 
 public enum AccountStatus {
-    SUSPENDED, CLOSE
+    ACTIVE, SUSPENDED, CLOSE
 }
