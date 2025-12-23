@@ -1,5 +1,6 @@
 package com.lsp.atomic_payments.domain.payment;
 
+import java.time.Instant;
 import java.util.List;
 
 import org.springframework.transaction.reactive.TransactionalOperator;
@@ -9,6 +10,7 @@ import com.lsp.atomic_payments.domain.account.AccountRepository;
 import com.lsp.atomic_payments.domain.ledger.EntryType;
 import com.lsp.atomic_payments.domain.ledger.LedgerEntry;
 import com.lsp.atomic_payments.domain.ledger.LedgerEntryId;
+import com.lsp.atomic_payments.domain.ledger.LedgerPair;
 import com.lsp.atomic_payments.domain.ledger.LedgerRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -46,27 +48,18 @@ public class PaymentService {
 
                     Payment payment = Payment.initiate(command);
 
-                    LedgerEntry entryDebit = new LedgerEntry(
-                            LedgerEntryId.newId(),
+                    LedgerPair ledgerPair = LedgerEntry.createLedgerPair(
                             fromAccount.accountId(),
-                            payment.paymentId(),
-                            payment.amount(),
-                            EntryType.DEBIT,
-                            payment.createdAt());
-
-                    LedgerEntry entryCredit = new LedgerEntry(
-                            LedgerEntryId.newId(),
                             toAccount.accountId(),
                             payment.paymentId(),
                             payment.amount(),
-                            EntryType.CREDIT,
-                            payment.createdAt());
+                            Instant.now());
 
                     fromAccount.debit(payment.amount());
                     toAccount.credit(payment.amount());
 
                     return paymentRepository.save(payment)
-                            .thenMany(ledgerRepository.saveAll(List.of(entryDebit, entryCredit)))
+                            .thenMany(ledgerRepository.saveAll(List.of(ledgerPair.credit(), ledgerPair.debit())))
                             .then(accountRepository.save(fromAccount))
                             .then(accountRepository.save(toAccount))
                             .thenReturn(payment);
