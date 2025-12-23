@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Column;
@@ -53,8 +54,40 @@ public class PaymentEntity implements Persistable<UUID> {
         return isNew;
     }
 
-    public void markNotNew() {
+    public static PaymentEntity newEntity(UUID id, UUID fromAccountId, UUID toAccountId, BigDecimal amount,
+            String currency,
+            String status, String reference) {
+
+        PaymentEntity paymentEntity = new PaymentEntity(
+                id,
+                fromAccountId,
+                toAccountId,
+                amount,
+                currency,
+                status,
+                reference,
+                Instant.now());
+        paymentEntity.isNew = true;
+
+        return paymentEntity;
+
+    }
+
+    @PersistenceCreator
+    public PaymentEntity(UUID id, UUID fromAccountId, UUID toAccountId, BigDecimal amount, String currency,
+            String status, String reference, Instant createdAt) {
+        this.id = id;
+        this.fromAccountId = fromAccountId;
+        this.toAccountId = toAccountId;
+        this.amount = amount;
+        this.currency = currency;
+        this.status = status;
+        this.reference = reference;
+        this.createdAt = createdAt;
         this.isNew = false;
+    }
+
+    public PaymentEntity() {
     }
 
 }
