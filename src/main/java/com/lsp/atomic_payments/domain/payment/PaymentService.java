@@ -3,19 +3,19 @@ package com.lsp.atomic_payments.domain.payment;
 import java.time.Instant;
 import java.util.List;
 
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 
 import com.lsp.atomic_payments.domain.account.Account;
 import com.lsp.atomic_payments.domain.account.AccountRepository;
-import com.lsp.atomic_payments.domain.ledger.EntryType;
 import com.lsp.atomic_payments.domain.ledger.LedgerEntry;
-import com.lsp.atomic_payments.domain.ledger.LedgerEntryId;
 import com.lsp.atomic_payments.domain.ledger.LedgerPair;
 import com.lsp.atomic_payments.domain.ledger.LedgerRepository;
 
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
+@Service
 @RequiredArgsConstructor
 public class PaymentService {
 
