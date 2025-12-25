@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import com.lsp.atomic_payments.domain.account.Account;
 import com.lsp.atomic_payments.domain.account.AccountId;
 import com.lsp.atomic_payments.domain.account.AccountStatus;
+import com.lsp.atomic_payments.domain.account.AccountVersion;
 import com.lsp.atomic_payments.domain.common.Money;
 
 class AccountMapperTest {
@@ -25,6 +26,7 @@ class AccountMapperTest {
     static final Currency BALANCE_CURRENCY = Currency.getInstance("EUR");
     static final Money BALANCE = new Money(BALANCE_AMOUNT, BALANCE_CURRENCY);
     static final AccountStatus STATUS = AccountStatus.SUSPENDED;
+    private static final AccountVersion VERSION = new AccountVersion(0l);
     static final Instant CREATED_AT = Instant.parse("2024-01-01T10:00:00Z");
 
     @BeforeEach
@@ -50,6 +52,7 @@ class AccountMapperTest {
                 OWNER,
                 BALANCE,
                 STATUS,
+                VERSION,
                 CREATED_AT);
 
         AccountEntity entity = mapper.toEntity(account);
@@ -59,6 +62,7 @@ class AccountMapperTest {
         assertEquals(BALANCE_AMOUNT, entity.getBalanceAmount());
         assertEquals(BALANCE_CURRENCY.getCurrencyCode(), entity.getBalanceCurrency());
         assertEquals(STATUS.name(), entity.getStatus());
+        assertEquals(VERSION.value(), entity.getVersion());
         assertEquals(CREATED_AT, entity.getCreatedAt());
     }
 
@@ -71,6 +75,7 @@ class AccountMapperTest {
         entity.setBalanceAmount(BALANCE_AMOUNT);
         entity.setBalanceCurrency(BALANCE_CURRENCY.getCurrencyCode());
         entity.setStatus(STATUS.name());
+        entity.setVersion(VERSION.value());
         entity.setCreatedAt(CREATED_AT);
 
         Account account = mapper.toDomain(entity);
@@ -80,6 +85,7 @@ class AccountMapperTest {
         assertEquals(BALANCE_AMOUNT, account.balance().amount());
         assertEquals(BALANCE_CURRENCY, account.balance().currency());
         assertEquals(STATUS, account.status());
+        assertEquals(VERSION, account.version());
         assertEquals(CREATED_AT, account.createdAt());
     }
 
@@ -91,6 +97,7 @@ class AccountMapperTest {
                 OWNER,
                 BALANCE,
                 STATUS,
+                VERSION,
                 CREATED_AT);
 
         AccountEntity entity = mapper.toEntity(original);
@@ -101,6 +108,7 @@ class AccountMapperTest {
         assertEquals(original.balance().amount(), mappedBack.balance().amount());
         assertEquals(original.balance().currency(), mappedBack.balance().currency());
         assertEquals(original.status(), mappedBack.status());
+        assertEquals(original.version(), mappedBack.version());
         assertEquals(original.createdAt(), mappedBack.createdAt());
     }
 }

@@ -9,6 +9,7 @@ public record Account(
                 String owner,
                 Money balance,
                 AccountStatus status,
+                AccountVersion version,
                 Instant createdAt) {
 
         public boolean isActive() {
@@ -24,6 +25,7 @@ public record Account(
                                 this.owner,
                                 newBalance,
                                 this.status,
+                                this.version,
                                 this.createdAt);
         }
 
@@ -36,6 +38,7 @@ public record Account(
                                 this.owner,
                                 newBalance,
                                 this.status,
+                                this.version,
                                 this.createdAt);
         }
 }

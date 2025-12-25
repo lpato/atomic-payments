@@ -19,6 +19,7 @@ class AccountTest {
     private static final Money MONEY_70EUR = new Money(BigDecimal.valueOf(70), Currency.getInstance("EUR"));
     private static final Money MONEY_50EUR = new Money(BigDecimal.valueOf(50), Currency.getInstance("EUR"));
     private static final Money MONEY_150EUR = new Money(BigDecimal.valueOf(150), Currency.getInstance("EUR"));
+    private static final AccountVersion VERSION = new AccountVersion(0l);
 
     @Test
     void isActive_returnsTrue_whenStatusIsActive() {
@@ -27,6 +28,7 @@ class AccountTest {
                 OWNER,
                 MONEY_100EUR,
                 AccountStatus.ACTIVE,
+                VERSION,
                 NOW);
 
         assertThat(account.isActive()).isTrue();
@@ -39,6 +41,7 @@ class AccountTest {
                 OWNER,
                 MONEY_100EUR,
                 AccountStatus.SUSPENDED,
+                VERSION,
                 NOW);
 
         assertThat(account.isActive()).isFalse();
@@ -51,6 +54,7 @@ class AccountTest {
                 OWNER,
                 MONEY_100EUR,
                 AccountStatus.ACTIVE,
+                VERSION,
                 NOW);
 
         Account debited = account.debit(MONEY_30EUR);
@@ -72,6 +76,7 @@ class AccountTest {
                 OWNER,
                 MONEY_100EUR,
                 AccountStatus.ACTIVE,
+                VERSION,
                 NOW);
 
         Account credited = account.credit(MONEY_50EUR);

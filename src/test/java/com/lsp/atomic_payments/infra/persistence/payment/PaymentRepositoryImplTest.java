@@ -14,6 +14,7 @@ import com.lsp.atomic_payments.domain.account.Account;
 import com.lsp.atomic_payments.domain.account.AccountId;
 import com.lsp.atomic_payments.domain.account.AccountRepository;
 import com.lsp.atomic_payments.domain.account.AccountStatus;
+import com.lsp.atomic_payments.domain.account.AccountVersion;
 import com.lsp.atomic_payments.domain.common.Money;
 import com.lsp.atomic_payments.domain.payment.Payment;
 import com.lsp.atomic_payments.domain.payment.PaymentId;
@@ -41,6 +42,8 @@ class PaymentRepositoryImplTest {
     static final Currency BALANCE_CURRENCY = Currency.getInstance("EUR");
     static final Money BALANCE = new Money(BALANCE_AMOUNT, BALANCE_CURRENCY);
 
+    private static final AccountVersion VERSION = new AccountVersion(0L);
+
     @Autowired
     private PaymentRepository paymentRepository;
 
@@ -52,11 +55,11 @@ class PaymentRepositoryImplTest {
 
         AccountId accountId1 = AccountId.newId();
         Instant createdAt1 = Instant.now();
-        Account account1 = new Account(accountId1, OWNER, BALANCE, AccountStatus.SUSPENDED, createdAt1);
+        Account account1 = new Account(accountId1, OWNER, BALANCE, AccountStatus.SUSPENDED, VERSION, createdAt1);
 
         AccountId accountId2 = AccountId.newId();
         Instant createdAt2 = Instant.now();
-        Account account2 = new Account(accountId2, OWNER, BALANCE, AccountStatus.SUSPENDED, createdAt2);
+        Account account2 = new Account(accountId2, OWNER, BALANCE, AccountStatus.SUSPENDED, VERSION, createdAt2);
 
         Mono<Account> setup = accountRepository.save(account1)
                 .then(accountRepository.save(account2));

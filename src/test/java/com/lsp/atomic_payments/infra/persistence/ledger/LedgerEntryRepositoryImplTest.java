@@ -18,6 +18,7 @@ import com.lsp.atomic_payments.domain.account.Account;
 import com.lsp.atomic_payments.domain.account.AccountId;
 import com.lsp.atomic_payments.domain.account.AccountRepository;
 import com.lsp.atomic_payments.domain.account.AccountStatus;
+import com.lsp.atomic_payments.domain.account.AccountVersion;
 import com.lsp.atomic_payments.domain.common.Money;
 import com.lsp.atomic_payments.domain.ledger.EntryType;
 import com.lsp.atomic_payments.domain.ledger.LedgerEntry;
@@ -37,70 +38,73 @@ import reactor.test.StepVerifier;
 @SpringBootTest
 public class LedgerEntryRepositoryImplTest {
 
-    @Autowired
-    private AccountRepository accountRepository;
+        @Autowired
+        private AccountRepository accountRepository;
 
-    @Autowired
-    private PaymentRepository paymentRepository;
+        @Autowired
+        private PaymentRepository paymentRepository;
 
-    @Autowired
-    private LedgerRepository ledgerEntryRepository;
+        @Autowired
+        private LedgerRepository ledgerEntryRepository;
 
-    private Account account1;
-    private Account account2;
-    private Payment payment;
-    private LedgerEntry ledger1;
-    private LedgerEntry ledger2;
+        private Account account1;
+        private Account account2;
+        private Payment payment;
+        private LedgerEntry ledger1;
+        private LedgerEntry ledger2;
 
-    @BeforeEach
-    private void setUp() {
+        private static final AccountVersion VERSION = new AccountVersion(0L);
 
-        // given
-        account1 = new Account(AccountId.newId(), "owner",
-                new Money(BigDecimal.valueOf(10), Currency.getInstance("EUR")),
-                AccountStatus.SUSPENDED, Instant.now());
+        @BeforeEach
+        private void setUp() {
 
-        account2 = new Account(AccountId.newId(), "owner",
-                new Money(BigDecimal.valueOf(10), Currency.getInstance("EUR")),
-                AccountStatus.SUSPENDED, Instant.now());
+                // given
+                account1 = new Account(AccountId.newId(), "ledgertest",
+                                new Money(BigDecimal.valueOf(10), Currency.getInstance("EUR")),
+                                AccountStatus.SUSPENDED, VERSION, Instant.now());
 
-        payment = new Payment(PaymentId.newId(), account1.accountId(), account2.accountId(),
-                new Money(BigDecimal.valueOf(5), Currency.getInstance("EUR")), PaymentStatus.PENDING, "test",
-                Instant.now());
+                account2 = new Account(AccountId.newId(), "ledgertest",
+                                new Money(BigDecimal.valueOf(10), Currency.getInstance("EUR")),
+                                AccountStatus.SUSPENDED, VERSION, Instant.now());
 
-        ledger1 = new LedgerEntry(LedgerEntryId.newId(), account1.accountId(), payment.paymentId(),
-                payment.amount(), EntryType.CREDIT, Instant.now());
-        ledger2 = new LedgerEntry(LedgerEntryId.newId(), account2.accountId(), payment.paymentId(),
-                payment.amount(), EntryType.DEBIT, Instant.now());
+                payment = new Payment(PaymentId.newId(), account1.accountId(), account2.accountId(),
+                                new Money(BigDecimal.valueOf(5), Currency.getInstance("EUR")), PaymentStatus.PENDING,
+                                "test",
+                                Instant.now());
 
-    }
+                ledger1 = new LedgerEntry(LedgerEntryId.newId(), account1.accountId(), payment.paymentId(),
+                                payment.amount(), EntryType.CREDIT, Instant.now());
+                ledger2 = new LedgerEntry(LedgerEntryId.newId(), account2.accountId(), payment.paymentId(),
+                                payment.amount(), EntryType.DEBIT, Instant.now());
 
-    @Test
-    void testSaveAll() {
+        }
 
-        List<LedgerEntry> entries = List.of(ledger1, ledger2);
+        @Test
+        void testSaveAll() {
 
-        // when
-        Mono<Void> setUp = accountRepository.save(account1)
-                .then(accountRepository.save(account2)
-                        .then(paymentRepository.save(payment))
-                        .thenMany(ledgerEntryRepository.saveAll(entries)).then());
+                List<LedgerEntry> entries = List.of(ledger1, ledger2);
 
-        Flux<LedgerEntry> result = setUp.thenMany(ledgerEntryRepository.findByPaymentId(payment.paymentId()));
+                // when
+                Mono<Void> setUp = accountRepository.save(account1)
+                                .then(accountRepository.save(account2)
+                                                .then(paymentRepository.save(payment))
+                                                .thenMany(ledgerEntryRepository.saveAll(entries)).then());
 
-        // then
-        StepVerifier.create(result)
-                .recordWith(ArrayList::new)
-                .thenConsumeWhile(e -> true)
-                .consumeRecordedWith(found -> {
-                    assertThat(found).hasSize(2);
-                    assertThat(found)
-                            .extracting(LedgerEntry::ledgerEntryId)
-                            .contains(
-                                    ledger1.ledgerEntryId(),
-                                    ledger2.ledgerEntryId());
-                })
-                .verifyComplete();
+                Flux<LedgerEntry> result = setUp.thenMany(ledgerEntryRepository.findByPaymentId(payment.paymentId()));
 
-    }
+                // then
+                StepVerifier.create(result)
+                                .recordWith(ArrayList::new)
+                                .thenConsumeWhile(e -> true)
+                                .consumeRecordedWith(found -> {
+                                        assertThat(found).hasSize(2);
+                                        assertThat(found)
+                                                        .extracting(LedgerEntry::ledgerEntryId)
+                                                        .contains(
+                                                                        ledger1.ledgerEntryId(),
+                                                                        ledger2.ledgerEntryId());
+                                })
+                                .verifyComplete();
+
+        }
 }

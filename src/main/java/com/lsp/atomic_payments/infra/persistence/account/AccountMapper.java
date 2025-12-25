@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import com.lsp.atomic_payments.domain.account.Account;
 import com.lsp.atomic_payments.domain.account.AccountId;
 import com.lsp.atomic_payments.domain.account.AccountStatus;
+import com.lsp.atomic_payments.domain.account.AccountVersion;
 import com.lsp.atomic_payments.domain.common.Money;
 
 @Component
@@ -23,6 +24,7 @@ public class AccountMapper {
         entity.setBalanceAmount(account.balance().amount());
         entity.setBalanceCurrency(account.balance().currency().getCurrencyCode());
         entity.setStatus(account.status().name());
+        entity.setVersion(account.version().value());
         entity.setCreatedAt(account.createdAt());
 
         return entity;
@@ -38,6 +40,7 @@ public class AccountMapper {
                 entity.getOwner(),
                 new Money(entity.getBalanceAmount(), Currency.getInstance(entity.getBalanceCurrency())),
                 AccountStatus.valueOf(entity.getStatus()),
+                new AccountVersion(entity.getVersion()),
                 entity.getCreatedAt());
     }
 
