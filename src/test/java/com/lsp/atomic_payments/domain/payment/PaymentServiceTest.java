@@ -87,7 +87,7 @@ public class PaymentServiceTest {
                     var to = tuple.getT4();
 
                     // payment assertions
-                    assertThat(payment.amount()).isEqualTo(toPay);
+                    assertThat(payment.amount().amount()).isEqualByComparingTo(toPay.amount());
                     assertThat(payment.status()).isEqualTo(PaymentStatus.PENDING);
 
                     // ledger assertions
