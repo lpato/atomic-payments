@@ -15,4 +15,11 @@ public record Money(
                 return new Money(amount.add(plus.amount), currency);
         }
 
+        @Override
+        public String toString() {
+
+                return amount + " " + currency.getCurrencyCode();
+
+        }
+
 }
