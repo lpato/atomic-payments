@@ -18,6 +18,7 @@ import com.lsp.atomic_payments.domain.payment.PaymentService;
 
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
+import org.springframework.web.bind.annotation.PostMapping;
 
 @RestController
 @RequestMapping("/payments")
@@ -26,6 +27,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
+    @PostMapping
     public Mono<ResponseEntity<PaymentResponse>> createPayment(@RequestBody CreatePaymentRequest request) {
 
         return paymentService.initiatePayment(toCommand(request))
