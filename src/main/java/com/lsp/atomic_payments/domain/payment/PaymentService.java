@@ -8,6 +8,9 @@ import org.springframework.transaction.reactive.TransactionalOperator;
 
 import com.lsp.atomic_payments.domain.account.Account;
 import com.lsp.atomic_payments.domain.account.AccountRepository;
+import com.lsp.atomic_payments.domain.exception.AccountNotActiveException;
+import com.lsp.atomic_payments.domain.exception.CurrencyMismatchException;
+import com.lsp.atomic_payments.domain.exception.InsufficientFundsException;
 import com.lsp.atomic_payments.domain.ledger.LedgerEntry;
 import com.lsp.atomic_payments.domain.ledger.LedgerPair;
 import com.lsp.atomic_payments.domain.ledger.LedgerRepository;
@@ -34,16 +37,16 @@ public class PaymentService {
 
                     // validation
                     if (!fromAccount.isActive()) {
-                        return Mono.error(new IllegalStateException("From account is not active"));
+                        return Mono.error(new AccountNotActiveException(fromAccount.accountId()));
                     }
                     if (!toAccount.isActive()) {
-                        return Mono.error(new IllegalStateException("To account is not active"));
+                        return Mono.error(new AccountNotActiveException(toAccount.accountId()));
                     }
                     if (!fromAccount.balance().currency().equals(toAccount.balance().currency())) {
-                        return Mono.error(new IllegalStateException("Accounts are in different currency"));
+                        return Mono.error(new CurrencyMismatchException());
                     }
                     if (fromAccount.balance().amount().compareTo(command.amount().amount()) < 0) {
-                        return Mono.error(new IllegalStateException("Account has not enough funds"));
+                        return Mono.error(new InsufficientFundsException(fromAccount.accountId(), command.amount()));
                     }
 
                     Payment payment = Payment.initiate(command);
