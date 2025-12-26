@@ -55,13 +55,13 @@ public class PaymentService {
                             payment.amount(),
                             Instant.now());
 
-                    fromAccount.debit(payment.amount());
-                    toAccount.credit(payment.amount());
+                    Account fromUpdated = fromAccount.debit(payment.amount());
+                    Account toUpdated = toAccount.credit(payment.amount());
 
                     return paymentRepository.save(payment)
                             .thenMany(ledgerRepository.saveAll(List.of(ledgerPair.credit(), ledgerPair.debit())))
-                            .then(accountRepository.save(fromAccount))
-                            .then(accountRepository.save(toAccount))
+                            .then(accountRepository.update(fromUpdated))
+                            .then(accountRepository.update(toUpdated))
                             .thenReturn(payment);
                 })).single();
     }
