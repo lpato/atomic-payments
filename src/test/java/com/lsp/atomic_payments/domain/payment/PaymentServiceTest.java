@@ -17,6 +17,7 @@ import com.lsp.atomic_payments.domain.account.AccountRepository;
 import com.lsp.atomic_payments.domain.account.AccountStatus;
 import com.lsp.atomic_payments.domain.account.AccountVersion;
 import com.lsp.atomic_payments.domain.common.Money;
+import com.lsp.atomic_payments.domain.exception.ConcurrentAccountUpdateException;
 import com.lsp.atomic_payments.domain.exception.CurrencyMismatchException;
 import com.lsp.atomic_payments.domain.exception.InsufficientFundsException;
 import com.lsp.atomic_payments.domain.ledger.EntryType;
@@ -167,6 +168,64 @@ public class PaymentServiceTest {
                         .isEqualByComparingTo("100"))
                 .verifyComplete();
 
+    }
+
+    @Test
+    void shouldFailOnePaymentOnConcurrentAccountUpdate() {
+
+        Account source = new Account(
+                AccountId.newId(),
+                "source",
+                new Money(BigDecimal.valueOf(100), Currency.getInstance("EUR")),
+                AccountStatus.ACTIVE,
+                VERSION,
+                NOW);
+
+        Account target1 = new Account(
+                AccountId.newId(),
+                "target1",
+                new Money(BigDecimal.valueOf(100), Currency.getInstance("EUR")),
+                AccountStatus.ACTIVE,
+                VERSION,
+                NOW);
+        Account target2 = new Account(
+                AccountId.newId(),
+                "target2",
+                new Money(BigDecimal.valueOf(100), Currency.getInstance("EUR")),
+                AccountStatus.ACTIVE,
+                VERSION,
+                NOW);
+
+        PaymentCommand command1 = new PaymentCommand(
+                source.accountId(),
+                target1.accountId(),
+                new Money(BigDecimal.valueOf(60), Currency.getInstance("EUR")),
+                "p1",
+                null);
+
+        PaymentCommand command2 = new PaymentCommand(
+                source.accountId(),
+                target2.accountId(),
+                new Money(BigDecimal.valueOf(60), Currency.getInstance("EUR")),
+                "p2",
+                null);
+
+        Mono<Void> setup = accountRepository.save(source)
+                .then(accountRepository.save(target1))
+                .then(accountRepository.save(target2))
+                .then();
+
+        Mono<Void> concurrent = setup.then(
+                Mono.whenDelayError(
+                        paymentService.initiatePayment(command1),
+                        paymentService.initiatePayment(command2)));
+
+        StepVerifier.create(concurrent).expectError(ConcurrentAccountUpdateException.class).verify();
+
+        StepVerifier.create(accountRepository.findById(source.accountId()))
+                .assertNext(acc -> assertThat(acc.balance().amount())
+                        .isEqualByComparingTo("40"))
+                .verifyComplete();
     }
 
 }
