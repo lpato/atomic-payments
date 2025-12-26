@@ -17,6 +17,8 @@ import com.lsp.atomic_payments.domain.account.AccountRepository;
 import com.lsp.atomic_payments.domain.account.AccountStatus;
 import com.lsp.atomic_payments.domain.account.AccountVersion;
 import com.lsp.atomic_payments.domain.common.Money;
+import com.lsp.atomic_payments.domain.exception.CurrencyMismatchException;
+import com.lsp.atomic_payments.domain.exception.InsufficientFundsException;
 import com.lsp.atomic_payments.domain.ledger.EntryType;
 import com.lsp.atomic_payments.domain.ledger.LedgerEntry;
 import com.lsp.atomic_payments.domain.ledger.LedgerRepository;
@@ -106,6 +108,65 @@ public class PaymentServiceTest {
                             .isEqualByComparingTo(BigDecimal.valueOf(50));
                 })
                 .verifyComplete();
+    }
+
+    @Test
+    void testInsufficientFunds() {
+
+        Mono<Void> setUp = accountRepository.save(accountFrom)
+                .then(accountRepository.save(accountTo))
+                .then();
+
+        Money toPay = new Money(BigDecimal.valueOf(200), Currency.getInstance("EUR"));
+
+        PaymentCommand pay = new PaymentCommand(
+                accountFrom.accountId(),
+                accountTo.accountId(),
+                toPay,
+                "test",
+                null);
+
+        Mono<Payment> result = setUp.then(paymentService.initiatePayment(pay));
+
+        StepVerifier.create(result).expectError(InsufficientFundsException.class).verify();
+
+        StepVerifier.create(accountRepository.findById(accountFrom.accountId()))
+                .assertNext(account -> assertThat(account.balance().amount())
+                        .isEqualByComparingTo("100"))
+                .verifyComplete();
+
+    }
+
+    @Test
+    void testCurrencyMismatch() {
+
+        accountFrom = new Account(AccountId.newId(), "test3", new Money(BigDecimal.valueOf(100),
+                Currency.getInstance("EUR")), AccountStatus.ACTIVE, VERSION, NOW);
+        accountTo = new Account(AccountId.newId(), "test3", new Money(BigDecimal.valueOf(30),
+                Currency.getInstance("USD")), AccountStatus.ACTIVE, VERSION, NOW);
+
+        Mono<Void> setUp = accountRepository.save(accountFrom)
+                .then(accountRepository.save(accountTo))
+                .then();
+
+        Money toPay = new Money(BigDecimal.valueOf(200), Currency.getInstance("EUR"));
+
+        PaymentCommand pay = new PaymentCommand(
+                accountFrom.accountId(),
+                accountTo.accountId(),
+                toPay,
+                "test",
+                null);
+
+        Mono<Payment> result = setUp.then(paymentService.initiatePayment(pay));
+
+        StepVerifier.create(result).expectError(CurrencyMismatchException.class).verify();
+
+        StepVerifier.create(accountRepository.findById(accountFrom.accountId()))
+                .assertNext(account -> assertThat(account.balance().amount())
+                        .isEqualByComparingTo("100"))
+                .verifyComplete();
+
     }
 
 }
