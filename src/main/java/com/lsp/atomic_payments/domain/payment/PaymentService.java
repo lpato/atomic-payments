@@ -31,7 +31,7 @@ public class PaymentService {
     private final AccountRepository accountRepository;
     private final LedgerRepository ledgerRepository;
 
-    Mono<Payment> initiatePayment(PaymentCommand command) {
+    public Mono<Payment> initiatePayment(PaymentCommand command) {
 
         Mono<Payment> logic = Mono.zip(
 
