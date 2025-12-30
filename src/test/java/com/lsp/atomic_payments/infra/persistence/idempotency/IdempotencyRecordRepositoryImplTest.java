@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.r2dbc.DataR2dbcTest;
 import org.springframework.context.annotation.Import;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.lsp.atomic_payments.domain.account.Account;
 import com.lsp.atomic_payments.domain.account.AccountId;
 import com.lsp.atomic_payments.domain.account.AccountStatus;
@@ -44,7 +46,8 @@ class IdempotencyRecordRepositoryImplTest {
 
                 key = UUID.randomUUID().toString();
 
-                utils = new IdempotencyUtils();
+                utils = new IdempotencyUtils(new ObjectMapper()
+                                .registerModule(new JavaTimeModule()));
 
                 from = new Account(
                                 AccountId.newId(),
