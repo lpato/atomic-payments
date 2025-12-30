@@ -76,7 +76,6 @@ public class PaymentService {
                 });
 
         return logic
-                .as(transactionalOperator::transactional)
                 .onErrorMap(this::translateConcurrencyError);
 
     }
