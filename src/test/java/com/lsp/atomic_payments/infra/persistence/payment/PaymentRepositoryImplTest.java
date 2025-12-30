@@ -8,7 +8,8 @@ import java.util.Currency;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.data.r2dbc.DataR2dbcTest;
+import org.springframework.context.annotation.Import;
 
 import com.lsp.atomic_payments.domain.account.Account;
 import com.lsp.atomic_payments.domain.account.AccountId;
@@ -20,11 +21,19 @@ import com.lsp.atomic_payments.domain.payment.Payment;
 import com.lsp.atomic_payments.domain.payment.PaymentId;
 import com.lsp.atomic_payments.domain.payment.PaymentRepository;
 import com.lsp.atomic_payments.domain.payment.PaymentStatus;
+import com.lsp.atomic_payments.infra.persistence.account.AccountMapper;
+import com.lsp.atomic_payments.infra.persistence.account.AccountRepositoryImpl;
 
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-@SpringBootTest
+@DataR2dbcTest
+@Import({
+        PaymentRepositoryImpl.class,
+        AccountRepositoryImpl.class,
+        PaymentMapper.class,
+        AccountMapper.class
+})
 class PaymentRepositoryImplTest {
 
     static final PaymentId PAYMENT_ID = PaymentId.newId();
