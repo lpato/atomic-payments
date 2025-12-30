@@ -1,5 +1,8 @@
 package com.lsp.atomic_payments.api.payment;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Currency;
@@ -8,8 +11,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec;
 
@@ -20,22 +26,29 @@ import com.lsp.atomic_payments.domain.account.AccountRepository;
 import com.lsp.atomic_payments.domain.account.AccountStatus;
 import com.lsp.atomic_payments.domain.account.AccountVersion;
 import com.lsp.atomic_payments.domain.common.Money;
+import com.lsp.atomic_payments.domain.exception.InsufficientFundsException;
+import com.lsp.atomic_payments.domain.payment.Payment;
+import com.lsp.atomic_payments.domain.payment.PaymentId;
+import com.lsp.atomic_payments.domain.payment.PaymentService;
+import com.lsp.atomic_payments.domain.payment.PaymentStatus;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureWebTestClient
+import reactor.core.publisher.Mono;
+
+@WebFluxTest(PaymentController.class)
 class PaymentControllerTest {
 
     @Autowired
     WebTestClient webTestClient;
 
-    @Autowired
-    AccountRepository accountRepository;
+    @MockitoBean
+    PaymentService paymentService;
 
     private static final AccountVersion VERSION = new AccountVersion(0);
     private static final Instant NOW = Instant.now();
 
     Account from;
     Account to;
+    Payment payment;
 
     @BeforeEach
     void setUp() {
@@ -48,11 +61,22 @@ class PaymentControllerTest {
                 new Money(BigDecimal.valueOf(100), Currency.getInstance("EUR")),
                 AccountStatus.ACTIVE, VERSION, NOW);
 
-        accountRepository.save(from).then(accountRepository.save(to)).block();
+        payment = new Payment(
+                PaymentId.newId(),
+                from.accountId(),
+                to.accountId(),
+                new Money(BigDecimal.valueOf(10), Currency.getInstance("EUR")),
+                PaymentStatus.PENDING,
+                "web test reference",
+                Instant.now());
+
     }
 
     @Test
     void testCreatePayment() {
+
+        when(paymentService.initiatePayment(any()))
+                .thenReturn(Mono.just(payment));
 
         final CreatePaymentRequest request = new CreatePaymentRequest(
                 from.accountId().value(),
@@ -83,6 +107,11 @@ class PaymentControllerTest {
                 "EUR",
                 "web test reference",
                 null);
+
+        when(paymentService.initiatePayment(any()))
+                .thenReturn(Mono.error(
+                        new InsufficientFundsException(from.accountId(),
+                                new Money(request.amount(), Currency.getInstance(request.currency())))));
 
         final ResponseSpec result = webTestClient.post().uri("/payments").bodyValue(request).exchange();
 
