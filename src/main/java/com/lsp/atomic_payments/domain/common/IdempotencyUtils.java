@@ -3,15 +3,20 @@ package com.lsp.atomic_payments.domain.common;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lsp.atomic_payments.domain.payment.Payment;
 import com.lsp.atomic_payments.domain.payment.PaymentCommand;
 
+import lombok.RequiredArgsConstructor;
+
+@Component
+@RequiredArgsConstructor
 public class IdempotencyUtils {
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper;
 
     public String serialize(Payment payment) {
         try {
