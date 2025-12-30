@@ -1,15 +1,11 @@
 package com.lsp.atomic_payments.domain.common;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
-import org.apache.commons.codec.digest.DigestUtils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lsp.atomic_payments.domain.exception.IdempotencyRecordException;
 import com.lsp.atomic_payments.domain.payment.Payment;
 import com.lsp.atomic_payments.domain.payment.PaymentCommand;
@@ -37,7 +33,7 @@ public class IdempotentPaymentService {
                 tx -> idempotencyRepository.findByKey(command.idempotencyKey())
                         .flatMap(existing -> handleExisting(existing, command))
                         .switchIfEmpty(
-                                executeAndStore(command))
+                                Mono.defer(() -> executeAndStore(command)))// avoid eager call to store
                         .onErrorResume(DuplicateKeyException.class,
                                 ex -> idempotencyRepository.findByKey(command.idempotencyKey())
                                         .flatMap(existing -> handleExisting(existing, command))))
