@@ -12,7 +12,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.r2dbc.DataR2dbcTest;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 
 import com.lsp.atomic_payments.domain.account.Account;
 import com.lsp.atomic_payments.domain.account.AccountId;
@@ -28,15 +30,27 @@ import com.lsp.atomic_payments.domain.payment.Payment;
 import com.lsp.atomic_payments.domain.payment.PaymentId;
 import com.lsp.atomic_payments.domain.payment.PaymentRepository;
 import com.lsp.atomic_payments.domain.payment.PaymentStatus;
-import com.lsp.atomic_payments.infra.persistence.account.AccountEntity;
-import com.lsp.atomic_payments.infra.persistence.payment.PaymentEntity;
+
+import com.lsp.atomic_payments.infra.persistence.account.AccountMapper;
+import com.lsp.atomic_payments.infra.persistence.account.AccountRepositoryImpl;
+
+import com.lsp.atomic_payments.infra.persistence.payment.PaymentMapper;
+import com.lsp.atomic_payments.infra.persistence.payment.PaymentRepositoryImpl;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-@SpringBootTest
-public class LedgerEntryRepositoryImplTest {
+@DataR2dbcTest
+@Import({
+                AccountRepositoryImpl.class,
+                PaymentRepositoryImpl.class,
+                LedgerEntryRepositoryImpl.class,
+                AccountMapper.class,
+                PaymentMapper.class,
+                LedgerEntryMapper.class
+})
+class LedgerEntryRepositoryImplTest {
 
         @Autowired
         private AccountRepository accountRepository;
