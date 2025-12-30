@@ -5,12 +5,14 @@ import java.util.Currency;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.lsp.atomic_payments.api.dto.CreatePaymentRequest;
 import com.lsp.atomic_payments.api.dto.PaymentResponse;
 import com.lsp.atomic_payments.domain.account.AccountId;
+import com.lsp.atomic_payments.domain.common.IdempotentPaymentService;
 import com.lsp.atomic_payments.domain.common.Money;
 import com.lsp.atomic_payments.domain.payment.Payment;
 import com.lsp.atomic_payments.domain.payment.PaymentCommand;
@@ -25,24 +27,26 @@ import org.springframework.web.bind.annotation.PostMapping;
 @RequiredArgsConstructor
 public class PaymentController {
 
-    private final PaymentService paymentService;
+    private final IdempotentPaymentService idempotentPaymentService;
 
     @PostMapping
-    public Mono<ResponseEntity<PaymentResponse>> createPayment(@RequestBody CreatePaymentRequest request) {
+    public Mono<ResponseEntity<PaymentResponse>> createPayment(
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @RequestBody CreatePaymentRequest request) {
 
-        return paymentService.initiatePayment(toCommand(request))
+        return idempotentPaymentService.initiate(toCommand(request, idempotencyKey))
                 .map(payment -> ResponseEntity
                         .status(HttpStatus.CREATED)
                         .body(toResponse(payment)));
     }
 
-    private PaymentCommand toCommand(CreatePaymentRequest req) {
+    private PaymentCommand toCommand(CreatePaymentRequest req, String idempotencyKey) {
         return new PaymentCommand(
                 new AccountId(req.fromAccountId()),
                 new AccountId(req.toAccountId()),
                 new Money(req.amount(), Currency.getInstance(req.currency())),
                 req.reference(),
-                req.idempotencyKey());
+                idempotencyKey);
     }
 
     private PaymentResponse toResponse(Payment payment) {

@@ -25,11 +25,11 @@ import com.lsp.atomic_payments.domain.account.AccountId;
 import com.lsp.atomic_payments.domain.account.AccountRepository;
 import com.lsp.atomic_payments.domain.account.AccountStatus;
 import com.lsp.atomic_payments.domain.account.AccountVersion;
+import com.lsp.atomic_payments.domain.common.IdempotentPaymentService;
 import com.lsp.atomic_payments.domain.common.Money;
 import com.lsp.atomic_payments.domain.exception.InsufficientFundsException;
 import com.lsp.atomic_payments.domain.payment.Payment;
 import com.lsp.atomic_payments.domain.payment.PaymentId;
-import com.lsp.atomic_payments.domain.payment.PaymentService;
 import com.lsp.atomic_payments.domain.payment.PaymentStatus;
 
 import reactor.core.publisher.Mono;
@@ -41,7 +41,7 @@ class PaymentControllerTest {
     WebTestClient webTestClient;
 
     @MockitoBean
-    PaymentService paymentService;
+    IdempotentPaymentService idempotentPaymentService;
 
     private static final AccountVersion VERSION = new AccountVersion(0);
     private static final Instant NOW = Instant.now();
@@ -75,7 +75,7 @@ class PaymentControllerTest {
     @Test
     void testCreatePayment() {
 
-        when(paymentService.initiatePayment(any()))
+        when(idempotentPaymentService.initiate(any()))
                 .thenReturn(Mono.just(payment));
 
         final CreatePaymentRequest request = new CreatePaymentRequest(
@@ -108,7 +108,7 @@ class PaymentControllerTest {
                 "web test reference",
                 null);
 
-        when(paymentService.initiatePayment(any()))
+        when(idempotentPaymentService.initiate(any()))
                 .thenReturn(Mono.error(
                         new InsufficientFundsException(from.accountId(),
                                 new Money(request.amount(), Currency.getInstance(request.currency())))));
