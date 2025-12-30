@@ -1,4 +1,4 @@
-package com.lsp.atomic_payments.infra.idempotency;
+package com.lsp.atomic_payments.infra.persistence.idempotency;
 
 import org.springframework.stereotype.Repository;
 
