@@ -10,7 +10,9 @@ import java.util.Currency;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.r2dbc.DataR2dbcTest;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 
 import com.lsp.atomic_payments.domain.account.Account;
 import com.lsp.atomic_payments.domain.account.AccountId;
@@ -23,7 +25,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-@SpringBootTest
+@DataR2dbcTest
+@Import({ AccountRepositoryImpl.class,
+        AccountMapper.class })
 class AccountRepositoryImplTest {
 
     static final AccountId ACCOUNT_ID = AccountId.newId();
@@ -36,7 +40,7 @@ class AccountRepositoryImplTest {
     static final Instant CREATED_AT = Instant.parse("2024-01-01T10:00:00Z");
 
     @Autowired
-    private AccountRepository accountRepository;
+    private AccountRepositoryImpl accountRepository;
 
     @Test
     void testFindAll() {
