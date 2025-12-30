@@ -26,7 +26,6 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class PaymentService {
 
-    private final TransactionalOperator transactionalOperator;
     private final PaymentRepository paymentRepository;
     private final AccountRepository accountRepository;
     private final LedgerRepository ledgerRepository;
