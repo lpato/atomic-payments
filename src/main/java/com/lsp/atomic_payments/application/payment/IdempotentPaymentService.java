@@ -1,4 +1,4 @@
-package com.lsp.atomic_payments.domain.common;
+package com.lsp.atomic_payments.application.payment;
 
 import java.time.Instant;
 
@@ -6,10 +6,12 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 
+import com.lsp.atomic_payments.domain.common.Idempotency;
+import com.lsp.atomic_payments.domain.common.IdempotencyRepository;
+import com.lsp.atomic_payments.domain.common.IdempotencyUtils;
 import com.lsp.atomic_payments.domain.exception.IdempotencyRecordException;
 import com.lsp.atomic_payments.domain.payment.Payment;
 import com.lsp.atomic_payments.domain.payment.PaymentCommand;
-import com.lsp.atomic_payments.domain.payment.PaymentService;
 
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;

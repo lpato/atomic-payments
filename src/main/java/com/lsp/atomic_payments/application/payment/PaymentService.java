@@ -1,4 +1,4 @@
-package com.lsp.atomic_payments.domain.payment;
+package com.lsp.atomic_payments.application.payment;
 
 import java.time.Instant;
 import java.util.List;
@@ -17,6 +17,9 @@ import com.lsp.atomic_payments.domain.exception.InsufficientFundsException;
 import com.lsp.atomic_payments.domain.ledger.LedgerEntry;
 import com.lsp.atomic_payments.domain.ledger.LedgerPair;
 import com.lsp.atomic_payments.domain.ledger.LedgerRepository;
+import com.lsp.atomic_payments.domain.payment.Payment;
+import com.lsp.atomic_payments.domain.payment.PaymentCommand;
+import com.lsp.atomic_payments.domain.payment.PaymentRepository;
 
 import lombok.RequiredArgsConstructor;
 import reactor.core.Exceptions;
