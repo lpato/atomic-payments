@@ -25,12 +25,12 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec;
 
 import com.lsp.atomic_payments.api.dto.CreatePaymentRequest;
+import com.lsp.atomic_payments.application.payment.IdempotentPaymentService;
 import com.lsp.atomic_payments.domain.account.Account;
 import com.lsp.atomic_payments.domain.account.AccountId;
 import com.lsp.atomic_payments.domain.account.AccountRepository;
 import com.lsp.atomic_payments.domain.account.AccountStatus;
 import com.lsp.atomic_payments.domain.account.AccountVersion;
-import com.lsp.atomic_payments.domain.common.IdempotentPaymentService;
 import com.lsp.atomic_payments.domain.common.Money;
 import com.lsp.atomic_payments.domain.exception.InsufficientFundsException;
 import com.lsp.atomic_payments.domain.payment.Payment;

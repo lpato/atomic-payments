@@ -29,11 +29,12 @@ import org.springframework.transaction.reactive.TransactionalOperator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.lsp.atomic_payments.application.payment.IdempotentPaymentService;
+import com.lsp.atomic_payments.application.payment.PaymentService;
 import com.lsp.atomic_payments.domain.account.AccountId;
 import com.lsp.atomic_payments.domain.payment.Payment;
 import com.lsp.atomic_payments.domain.payment.PaymentCommand;
 import com.lsp.atomic_payments.domain.payment.PaymentId;
-import com.lsp.atomic_payments.domain.payment.PaymentService;
 import com.lsp.atomic_payments.domain.payment.PaymentStatus;
 
 import reactor.core.publisher.Flux;

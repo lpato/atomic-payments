@@ -11,12 +11,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.lsp.atomic_payments.api.dto.CreatePaymentRequest;
 import com.lsp.atomic_payments.api.dto.PaymentResponse;
+import com.lsp.atomic_payments.application.payment.IdempotentPaymentService;
+import com.lsp.atomic_payments.application.payment.PaymentService;
 import com.lsp.atomic_payments.domain.account.AccountId;
-import com.lsp.atomic_payments.domain.common.IdempotentPaymentService;
 import com.lsp.atomic_payments.domain.common.Money;
 import com.lsp.atomic_payments.domain.payment.Payment;
 import com.lsp.atomic_payments.domain.payment.PaymentCommand;
-import com.lsp.atomic_payments.domain.payment.PaymentService;
 
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
