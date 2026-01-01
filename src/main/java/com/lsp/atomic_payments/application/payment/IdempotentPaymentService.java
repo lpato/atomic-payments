@@ -2,6 +2,7 @@ package com.lsp.atomic_payments.application.payment;
 
 import java.time.Instant;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
@@ -14,16 +15,19 @@ import com.lsp.atomic_payments.domain.payment.Payment;
 import com.lsp.atomic_payments.domain.payment.PaymentCommand;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class IdempotentPaymentService {
 
     private final PaymentService paymentService;
     private final IdempotencyRepository idempotencyRepository;
     private final TransactionalOperator transactionalOperator;
     private final IdempotencyUtils utils;
+    private final ApplicationEventPublisher eventPublisher;
 
     public Mono<Payment> initiate(PaymentCommand command) {
 
@@ -31,28 +35,43 @@ public class IdempotentPaymentService {
             return paymentService.initiatePayment(command);
         }
 
-        return transactionalOperator.execute(
-                tx -> idempotencyRepository.findByKey(command.idempotencyKey())
-                        .flatMap(existing -> handleExisting(existing, command))
-                        .switchIfEmpty(
-                                Mono.defer(() -> executeAndStore(command)))// avoid eager call to store
-                        .onErrorResume(DuplicateKeyException.class,
-                                ex -> idempotencyRepository.findByKey(command.idempotencyKey())
-                                        .flatMap(existing -> handleExisting(existing, command))))
+        return transactionalOperator.execute(tx -> idempotencyRepository.findByKey(command.idempotencyKey())
+                .flatMap(existing -> handleExisting(existing, command))
+                .switchIfEmpty(
+                        Mono.defer(() -> executeAndStore(command)))// avoid eager call to store
+                .onErrorResume(DuplicateKeyException.class,
+                        ex -> idempotencyRepository.findByKey(command.idempotencyKey())
+                                .flatMap(existing -> handleExisting(existing, command)))
+
+                .doOnSuccess(this::publishPaymentInitiated))
                 .single();
 
     }
 
-    private Mono<Payment> executeAndStore(PaymentCommand command) {
+    private void publishPaymentInitiated(Payment payment) {
+        eventPublisher.publishEvent(
+                new PaymentInitiatedEvent(
+                        payment.paymentId().value(),
+                        payment.fromAccountId().value(),
+                        payment.toAccountId().value(),
+                        payment.amount().amount(),
+                        payment.amount().currency().getCurrencyCode(),
+                        payment.createdAt()));
+    }
 
+    Mono<Payment> executeAndStore(PaymentCommand command) {
         return paymentService.initiatePayment(command)
-                .flatMap(payment -> {
-                    Idempotency entity = new Idempotency(
-                            command.idempotencyKey(),
-                            utils.hash(command),
-                            utils.serialize(payment), Instant.now());
-                    return idempotencyRepository.save(entity).thenReturn(payment);
-                });
+                .flatMap(payment -> idempotencyRepository.save(toRecord(command, payment))
+                        .thenReturn(payment));
+    }
+
+    private Idempotency toRecord(PaymentCommand command, Payment payment) {
+
+        return new Idempotency(
+                command.idempotencyKey(),
+                utils.hash(command),
+                utils.serialize(payment),
+                Instant.now());
     }
 
     private Mono<Payment> handleExisting(Idempotency existing, PaymentCommand command) {
