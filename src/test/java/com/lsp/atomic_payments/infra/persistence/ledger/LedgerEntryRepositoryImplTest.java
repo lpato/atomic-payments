@@ -8,12 +8,10 @@ import java.util.ArrayList;
 import java.util.Currency;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.r2dbc.DataR2dbcTest;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 
 import com.lsp.atomic_payments.domain.account.Account;
@@ -30,10 +28,8 @@ import com.lsp.atomic_payments.domain.payment.Payment;
 import com.lsp.atomic_payments.domain.payment.PaymentId;
 import com.lsp.atomic_payments.domain.payment.PaymentRepository;
 import com.lsp.atomic_payments.domain.payment.PaymentStatus;
-
 import com.lsp.atomic_payments.infra.persistence.account.AccountMapper;
 import com.lsp.atomic_payments.infra.persistence.account.AccountRepositoryImpl;
-
 import com.lsp.atomic_payments.infra.persistence.payment.PaymentMapper;
 import com.lsp.atomic_payments.infra.persistence.payment.PaymentRepositoryImpl;
 
@@ -70,7 +66,7 @@ class LedgerEntryRepositoryImplTest {
         private static final AccountVersion VERSION = new AccountVersion(0L);
 
         @BeforeEach
-        private void setUp() {
+        void setUp() {
 
                 // given
                 account1 = new Account(AccountId.newId(), "ledgertest",

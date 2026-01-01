@@ -1,43 +1,27 @@
 package com.lsp.atomic_payments.domain.common;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.Currency;
-
-import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.reactivestreams.Publisher;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.ReactiveTransaction;
-import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.reactive.TransactionCallback;
 import org.springframework.transaction.reactive.TransactionalOperator;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.lsp.atomic_payments.application.payment.IdempotentPaymentService;
 import com.lsp.atomic_payments.application.payment.PaymentInitiatedEvent;
 import com.lsp.atomic_payments.application.payment.PaymentService;
-import com.lsp.atomic_payments.domain.account.AccountId;
 import com.lsp.atomic_payments.domain.payment.Payment;
 import com.lsp.atomic_payments.domain.payment.PaymentCommand;
-import com.lsp.atomic_payments.domain.payment.PaymentId;
-import com.lsp.atomic_payments.domain.payment.PaymentStatus;
 import com.lsp.atomic_payments.domain.payment.PaymentTestFixture;
 
 import reactor.core.publisher.Flux;

@@ -77,18 +77,18 @@ class IdempotencyRecordRepositoryImplTest {
                                 "REFERENCE",
                                 key);
 
-                Idempotency record = new Idempotency(
+                Idempotency idempotency = new Idempotency(
                                 key,
                                 utils.hash(command),
                                 PAYLOAD,
                                 Instant.now());
 
-                StepVerifier.create(idempotencyRepository.save(record).then(idempotencyRepository.findByKey(key)))
+                StepVerifier.create(idempotencyRepository.save(idempotency).then(idempotencyRepository.findByKey(key)))
                                 .assertNext(found -> {
                                         assertThat(found.key()).isEqualTo(key);
                                         assertThat(found.requestHash()).isEqualTo(utils.hash(command));
                                         assertThat(found.responsePayload()).isEqualTo(PAYLOAD);
-                                        assertThat(found.createdAt()).isEqualTo(record.createdAt());
+                                        assertThat(found.createdAt()).isEqualTo(idempotency.createdAt());
 
                                 });
 

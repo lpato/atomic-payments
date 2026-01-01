@@ -21,10 +21,9 @@ public class IdempotencyRecordRepositoryImpl implements IdempotencyRepository {
 
         Mono<IdempotencyRecordEntity> result = idempotencyRecordR2dbcRepository.findById(key);
 
-        return result.map(entity -> {
-            return new Idempotency(entity.getIdempotencyKey(), entity.getRequestHash(), entity.getResponsePayload(),
-                    entity.getCreatedAt());
-        });
+        return result.map(entity -> new Idempotency(entity.getIdempotencyKey(), entity.getRequestHash(),
+                entity.getResponsePayload(),
+                entity.getCreatedAt()));
     }
 
     @Override
