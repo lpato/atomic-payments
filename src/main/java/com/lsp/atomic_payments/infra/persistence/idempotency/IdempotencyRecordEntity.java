@@ -3,16 +3,20 @@ package com.lsp.atomic_payments.infra.persistence.idempotency;
 import java.time.Instant;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.PersistenceCreator;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.lang.Nullable;
 
 import lombok.Getter;
 import lombok.Setter;
 
-@Table("idempotency_record")
+@Table("idempotency_records")
 @Getter
 @Setter
-public class IdempotencyRecordEntity {
+public class IdempotencyRecordEntity implements Persistable<String> {
 
     @Id
     private String idempotencyKey;
@@ -26,12 +30,35 @@ public class IdempotencyRecordEntity {
     @Column("created_at")
     private Instant createdAt;
 
+    @PersistenceCreator
     public IdempotencyRecordEntity(String idempotencyKey, String requestHash, String responsePayload,
             Instant createdAt) {
         this.idempotencyKey = idempotencyKey;
         this.requestHash = requestHash;
         this.responsePayload = responsePayload;
         this.createdAt = createdAt;
+        this.isNew = false;
+    }
+
+    public IdempotencyRecordEntity(String idempotencyKey, String requestHash, String responsePayload) {
+        this.idempotencyKey = idempotencyKey;
+        this.requestHash = requestHash;
+        this.responsePayload = responsePayload;
+        this.createdAt = Instant.now();
+        this.isNew = true;
+    }
+
+    @Transient
+    private boolean isNew = true;
+
+    @Override
+    public String getId() {
+        return idempotencyKey;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNew;
     }
 
 }
