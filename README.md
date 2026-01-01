@@ -1,65 +1,235 @@
 # Atomic Payments
 
-Atomic Payments is a reactive backend service that models **account wallets, payments, and double-entry ledger transactions** with strong consistency guarantees.
+**Atomic Payments** is a reactive, transactionally safe payment processing service designed to demonstrate **real-world fintech backend concerns**: atomicity, idempotency, concurrency control, and event-driven architecture.
 
-The project is designed as a **fintech-style payment engine**, focusing on:
-- Atomic transfers
-- Idempotent payment processing
-- Concurrency safety
-- Auditability
+The project is intentionally small but **architecturally complete**, focusing on correctness over feature breadth.
 
----
+## 📚 Table of Contents
 
-## Tech Stack
-
-- Java 21
-- Spring Boot 3 (WebFlux)
-- Project Reactor
-- Spring Data R2DBC
-- H2 / PostgreSQL
-- Flyway
-- Maven
-
----
-
-## Architecture
-
-The application follows a **layered, domain-centric architecture**:
+- [Key Features](#-key-features)
+- [Architecture Overview](#-architecture-overview)
+- [Payment Flow (Happy Path)](#-payment-flow-happy-path)
+- [Idempotency](#-idempotency)
+- [Concurrency & Consistency](#-concurrency--consistency)
+- [Ledger Model](#-ledger-model)
+- [Events & Messaging](#-events--messaging)
+- [API Example](#-api-example)
+- [Testing Strategy](#-testing-strategy)
+- [Tech Stack](#-tech-stack)
+- [Scope & Intent](#-scope--intent)
+- [Key Takeaways](#-key-takeaways)
 
 
-The **domain layer is framework-agnostic** and contains the core business rules.
+## ✨ Key Features
 
----
+- **Atomic payment execution**
+  - Account balance updates, payment creation, and ledger entries are committed as a single unit
+- **Double-entry ledger**
+  - Every payment produces one debit and one credit entry
+- **Optimistic locking & concurrency safety**
+  - Prevents lost updates when concurrent payments hit the same account
+- **Idempotent API**
+  - Safe retries using an idempotency key (industry-standard behavior)
+- **Reactive & non-blocking**
+  - Built with Spring WebFlux and R2DBC
+- **Post-commit event publishing**
+  - Emits payment events only after a successful transaction commit
 
-## Core Concepts
 
-- **Accounts (Wallets)**  
-  Hold balances and transaction history.
+## 🧱 Architecture Overview
 
-- **Payments**  
-  Atomic transfers between accounts with idempotency guarantees.
-
-- **Ledger**  
-  Double-entry bookkeeping ensuring financial correctness.
-
----
-
-## Features (Planned)
-
-- Create and query accounts
-- Perform atomic payments
-- Double-entry ledger entries
-- Idempotent payment API
-- Reactive persistence with R2DBC
-- Database migrations with Flyway
-- Domain events and audit logging
-
----
-
-## Running the Application
+The project follows a **clean, layered architecture**:
 
 ```
-docker compose up -d
-./mvnw spring-boot:run
+api
+ └─ HTTP controllers, DTOs, exception mapping
+
+application
+ └─ Use-case orchestration (idempotency, transactions, events)
+
+domain
+ └─ Core business model (Account, Payment, Ledger)
+ └─ Business rules & invariants
+
+infra
+ ├─ persistence (R2DBC repositories, Flyway)
+ └─ messaging (event listeners / publishers)
 ```
 
+### Design principles
+
+- Domain logic is **pure and immutable**
+- Infrastructure concerns are **isolated**
+- Transactions are handled **explicitly**
+- Side effects (events) occur **after commit**
+- APIs expose **business semantics, not internals**
+
+
+## 💸 Payment Flow (Happy Path)
+
+1. Client sends `POST /payments`
+2. API layer maps request → `PaymentCommand`
+3. **IdempotentPaymentService**
+   - Replays response if idempotency key already exists
+4. **PaymentService**
+   - Loads accounts
+   - Validates business rules
+   - Creates payment
+   - Updates balances
+   - Writes ledger entries
+5. Transaction commits atomically
+6. `PaymentInitiatedEvent` is published
+7. API responds `201 Created`
+
+
+## 🔐 Idempotency
+
+The API supports safe retries using an **Idempotency-Key** header.
+
+### Behavior
+
+| Scenario | Result |
+|-------|-------|
+| Same key + same request | Replayed response |
+| Same key + different request | `409 Conflict` |
+| No key | Normal execution |
+
+### Storage
+
+```sql
+idempotency_records
+- idempotency_key (PK)
+- request_hash
+- response_payload
+- created_at
+```
+## ⚖️ Concurrency & Consistency
+
+- Account updates use optimistic locking
+
+- Concurrent payments against the same account:
+
+- One succeeds
+
+- One fails with a domain-level ConcurrentAccountUpdateException
+
+- No partial writes are possible
+
+This behavior is explicitly tested.
+
+## 📒 Ledger Model
+
+Atomic Payments uses a double-entry ledger:
+
+- Every payment produces:
+
+  - One DEBIT entry (source account)
+
+  - One CREDIT entry (destination account)
+
+- Ledger entries are immutable and auditable
+
+- Account balances are derived state, ledger is the source of truth
+
+## 📡 Events & Messaging
+
+After a successful transaction commit, the system publishes:
+```
+PaymentInitiatedEvent
+```
+
+Characteristics:
+
+- Published only after commit
+
+- Never published on rollback
+
+- Decoupled from transaction logic
+
+- Ready to be extended to Kafka / SNS / etc.
+
+Current implementation uses Spring application events as a lightweight messaging mechanism.
+
+## 🌐 API Example
+###Create Payment
+```
+POST /payments
+Idempotency-Key: abc-123
+Content-Type: application/json
+
+{
+  "fromAccountId": "uuid",
+  "toAccountId": "uuid",
+  "amount": 20,
+  "currency": "EUR",
+  "reference": "invoice-42"
+}
+```
+
+### Successful Response
+```
+{
+  "paymentId": "uuid",
+  "status": "PENDING",
+  "amount": 20,
+  "currency": "EUR",
+  "createdAt": "2025-01-01T10:00:00Z"
+}
+```
+
+## 🧪 Testing Strategy
+
+The project includes:
+
+- Domain & repository integration tests
+
+- Transactional service tests
+
+- Concurrency tests
+
+- Idempotency tests
+
+- WebFlux API tests
+
+All critical invariants (atomicity, rollback, idempotency, concurrency) are explicitly tested.
+
+## 🚀 Tech Stack
+
+Java 17
+
+Spring Boot (WebFlux)
+
+Spring Data R2DBC
+
+PostgreSQL
+
+Flyway
+
+Reactor
+
+JUnit 5
+
+## 🎯 Scope & Intent
+
+This project is intentionally not a full payment platform.
+
+It is designed to demonstrate:
+
+Correct transactional boundaries
+
+Real-world payment semantics
+
+Production-grade backend design decisions
+
+## 🧠 Key Takeaways
+
+Transactions create facts — events announce them
+
+Idempotency is a protocol concern, not a domain concern
+
+Reactive systems require explicit transaction & error handling
+
+Correctness beats complexity
+
+
+---
