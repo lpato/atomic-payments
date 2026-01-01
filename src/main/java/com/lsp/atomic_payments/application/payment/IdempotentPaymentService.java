@@ -31,21 +31,29 @@ public class IdempotentPaymentService {
 
     public Mono<Payment> initiate(PaymentCommand command) {
 
+        return transactionalOperator.execute(tx -> handleIdemponecyOrDirect(command))
+
+                .single()
+                .doOnSuccess(this::publishPaymentInitiated);
+
+    }
+
+    private Mono<Payment> handleIdemponecyOrDirect(PaymentCommand command) {
         if (command.idempotencyKey() == null) {
             return paymentService.initiatePayment(command);
         }
+        return handleIdempotency(command);
+    }
 
-        return transactionalOperator.execute(tx -> idempotencyRepository.findByKey(command.idempotencyKey())
+    private Mono<Payment> handleIdempotency(PaymentCommand command) {
+
+        return idempotencyRepository.findByKey(command.idempotencyKey())
                 .flatMap(existing -> handleExisting(existing, command))
                 .switchIfEmpty(
                         Mono.defer(() -> executeAndStore(command)))// avoid eager call to store
                 .onErrorResume(DuplicateKeyException.class,
                         ex -> idempotencyRepository.findByKey(command.idempotencyKey())
-                                .flatMap(existing -> handleExisting(existing, command)))
-
-                .doOnSuccess(this::publishPaymentInitiated))
-                .single();
-
+                                .flatMap(existing -> handleExisting(existing, command)));
     }
 
     private void publishPaymentInitiated(Payment payment) {
