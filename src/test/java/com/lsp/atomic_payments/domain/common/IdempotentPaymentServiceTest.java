@@ -22,6 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.reactivestreams.Publisher;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.ReactiveTransaction;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.reactive.TransactionCallback;
@@ -30,12 +31,14 @@ import org.springframework.transaction.reactive.TransactionalOperator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.lsp.atomic_payments.application.payment.IdempotentPaymentService;
+import com.lsp.atomic_payments.application.payment.PaymentInitiatedEvent;
 import com.lsp.atomic_payments.application.payment.PaymentService;
 import com.lsp.atomic_payments.domain.account.AccountId;
 import com.lsp.atomic_payments.domain.payment.Payment;
 import com.lsp.atomic_payments.domain.payment.PaymentCommand;
 import com.lsp.atomic_payments.domain.payment.PaymentId;
 import com.lsp.atomic_payments.domain.payment.PaymentStatus;
+import com.lsp.atomic_payments.domain.payment.PaymentTestFixture;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -59,6 +62,9 @@ class IdempotentPaymentServiceTest {
     @InjectMocks
     IdempotentPaymentService service;
 
+    @Mock
+    ApplicationEventPublisher eventPublisher;
+
     @BeforeEach
     void setUp() {
 
@@ -74,7 +80,7 @@ class IdempotentPaymentServiceTest {
     void initiate_shouldExecuteAndStore_whenNoExistingRecord() {
 
         PaymentCommand command = mock(PaymentCommand.class);
-        Payment payment = mock(Payment.class);
+        Payment payment = PaymentTestFixture.validPayment();
 
         when(paymentService.initiatePayment(any()))
                 .thenReturn(Mono.just(mock(Payment.class)));
@@ -99,6 +105,9 @@ class IdempotentPaymentServiceTest {
         StepVerifier.create(service.initiate(command))
                 .expectNext(payment)
                 .verifyComplete();
+
+        verify(eventPublisher).publishEvent(any(PaymentInitiatedEvent.class));
+
     }
 
     @Test
@@ -106,7 +115,7 @@ class IdempotentPaymentServiceTest {
 
         PaymentCommand command = mock(PaymentCommand.class);
         Idempotency idempotency = mock(Idempotency.class);
-        Payment payment = mock(Payment.class);
+        Payment payment = PaymentTestFixture.validPayment();
 
         when(command.idempotencyKey()).thenReturn("key-1");
         when(idempotencyRepository.findByKey("key-1"))
@@ -124,6 +133,7 @@ class IdempotentPaymentServiceTest {
 
         verify(paymentService, never()).initiatePayment(any());
         verify(idempotencyRepository, never()).save(any());
+        verify(eventPublisher, never()).publishEvent(any());
 
     }
 
