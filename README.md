@@ -125,7 +125,6 @@ Atomic Payments uses a double-entry ledger:
 - Every payment produces:
 
   - One DEBIT entry (source account)
-
   - One CREDIT entry (destination account)
 
 - Ledger entries are immutable and auditable
@@ -142,17 +141,14 @@ PaymentInitiatedEvent
 Characteristics:
 
 - Published only after commit
-
 - Never published on rollback
-
 - Decoupled from transaction logic
-
 - Ready to be extended to Kafka / SNS / etc.
 
 Current implementation uses Spring application events as a lightweight messaging mechanism.
 
 ## 🌐 API Example
-###Create Payment
+### Create Payment
 ```
 POST /payments
 Idempotency-Key: abc-123
@@ -183,56 +179,42 @@ Content-Type: application/json
 The project includes:
 
 - Domain & repository integration tests
-
 - Transactional service tests
-
 - Concurrency tests
-
 - Idempotency tests
-
 - WebFlux API tests
 
 All critical invariants (atomicity, rollback, idempotency, concurrency) are explicitly tested.
 
 ## 🚀 Tech Stack
 
-Java 17
-
-Spring Boot (WebFlux)
-
-Spring Data R2DBC
-
-PostgreSQL
-
-Flyway
-
-Reactor
-
-JUnit 5
+- Java 17
+- Spring Boot (WebFlux)
+- Spring Data R2DBC
+- PostgreSQL
+- Flyway
+- Reactor
+- JUnit 5
 
 ## 🎯 Scope & Intent
 
-This project is intentionally not a full payment platform.
+This project is intentionally not a full payment platform. It is designed to demonstrate:
 
-It is designed to demonstrate:
-
-Correct transactional boundaries
-
-Real-world payment semantics
-
-Production-grade backend design decisions
+- Correct transactional boundaries
+- Real-world payment semantics
+- Production-grade backend design decisions
 
 ## 🧠 Key Takeaways
 
-Transactions create facts — events announce them
+- Transactions create facts — events announce them
 
-Idempotency is a protocol concern, not a domain concern
+- Idempotency is a protocol concern, not a domain concern
 
-Reactive systems require explicit transaction & error handling
+- Reactive systems require explicit transaction & error handling
 
-Correctness beats complexity
+- Correctness beats complexity
 
-## Getting Started
+## 🚀 Getting Started
 
 Prerequisites
 
@@ -253,7 +235,7 @@ docker compose up -d
 ```bash
 ./mvnw spring-boot:run
 ```
-The application starts on http://localhost:8080
+The application starts on http://localhost:8080. Test with curl:
 
 ```bash
 curl -X POST http://localhost:8080/payments \
@@ -270,7 +252,7 @@ curl -X POST http://localhost:8080/payments \
 **Note:** Accounts must exist before creating a payment.
 They can be inserted directly into the database for testing purposes.
 
-```
+```sql
 INSERT INTO accounts (
     id,
     owner,
