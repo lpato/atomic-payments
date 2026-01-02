@@ -4,6 +4,9 @@
 
 The project is intentionally small but **architecturally complete**, focusing on correctness over feature breadth.
 
+![CI](https://github.com/lpato/atomic-payments/actions/workflows/ci.yml/badge.svg)
+![Coverage](https://img.shields.io/badge/coverage-%3E=70%25-brightgreen)
+
 ## 📚 Table of Contents
 
 - [Key Features](#-key-features)
@@ -19,6 +22,7 @@ The project is intentionally small but **architecturally complete**, focusing on
 - [Scope & Intent](#-scope--intent)
 - [Key Takeaways](#-key-takeaways)
 - [Getting Started](#-getting-started)
+
 
 
 ## ✨ Key Features
@@ -286,6 +290,9 @@ INSERT INTO accounts (
 - Messaging is implemented using Spring application events and can be extended to Kafka or similar systems
 
 - The focus of the project is correctness and transactional safety rather than feature completeness
+
+
+
 
 
 
