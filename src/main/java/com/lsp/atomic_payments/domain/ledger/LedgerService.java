@@ -5,6 +5,5 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LedgerService {
 
-    private final LedgerRepository ledgerRepository;
-
+  private final LedgerRepository ledgerRepository;
 }

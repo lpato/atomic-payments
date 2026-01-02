@@ -4,7 +4,7 @@ import reactor.core.publisher.Mono;
 
 public interface IdempotencyRepository {
 
-    Mono<Idempotency> findByKey(String key);
+  Mono<Idempotency> findByKey(String key);
 
-    Mono<Void> save(Idempotency idempotency);
+  Mono<Void> save(Idempotency idempotency);
 }

@@ -2,17 +2,6 @@ package com.lsp.atomic_payments.infra.persistence.idempotency;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.Currency;
-import java.util.UUID;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.data.r2dbc.DataR2dbcTest;
-import org.springframework.context.annotation.Import;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.lsp.atomic_payments.domain.account.Account;
@@ -23,74 +12,78 @@ import com.lsp.atomic_payments.domain.common.Idempotency;
 import com.lsp.atomic_payments.domain.common.IdempotencyUtils;
 import com.lsp.atomic_payments.domain.common.Money;
 import com.lsp.atomic_payments.domain.payment.PaymentCommand;
-
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.Currency;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.r2dbc.DataR2dbcTest;
+import org.springframework.context.annotation.Import;
 import reactor.test.StepVerifier;
 
 @DataR2dbcTest
 @Import(IdempotencyRecordRepositoryImpl.class)
 class IdempotencyRecordRepositoryImplTest {
 
-        @Autowired
-        IdempotencyRecordRepositoryImpl idempotencyRepository;
-        IdempotencyUtils utils;
+  @Autowired IdempotencyRecordRepositoryImpl idempotencyRepository;
+  IdempotencyUtils utils;
 
-        Account from;
-        Account to;
-        String key;
-        private static final AccountVersion VERSION = new AccountVersion(0);
-        private static final Instant NOW = Instant.now();
-        private static final String PAYLOAD = "PAYLOAD";
+  Account from;
+  Account to;
+  String key;
+  private static final AccountVersion VERSION = new AccountVersion(0);
+  private static final Instant NOW = Instant.now();
+  private static final String PAYLOAD = "PAYLOAD";
 
-        @BeforeEach
-        void setUp() {
+  @BeforeEach
+  void setUp() {
 
-                key = UUID.randomUUID().toString();
+    key = UUID.randomUUID().toString();
 
-                utils = new IdempotencyUtils(new ObjectMapper()
-                                .registerModule(new JavaTimeModule()));
+    utils = new IdempotencyUtils(new ObjectMapper().registerModule(new JavaTimeModule()));
 
-                from = new Account(
-                                AccountId.newId(),
-                                "idempotencyFrom",
-                                new Money(BigDecimal.valueOf(10), Currency.getInstance("EUR")),
-                                AccountStatus.ACTIVE,
-                                VERSION,
-                                NOW);
+    from =
+        new Account(
+            AccountId.newId(),
+            "idempotencyFrom",
+            new Money(BigDecimal.valueOf(10), Currency.getInstance("EUR")),
+            AccountStatus.ACTIVE,
+            VERSION,
+            NOW);
 
-                to = new Account(
-                                AccountId.newId(),
-                                "idempotencyTo",
-                                new Money(BigDecimal.valueOf(10), Currency.getInstance("EUR")),
-                                AccountStatus.ACTIVE,
-                                VERSION,
-                                NOW);
+    to =
+        new Account(
+            AccountId.newId(),
+            "idempotencyTo",
+            new Money(BigDecimal.valueOf(10), Currency.getInstance("EUR")),
+            AccountStatus.ACTIVE,
+            VERSION,
+            NOW);
+  }
 
-        }
+  @Test
+  void testSaveAndFindByKey() {
 
-        @Test
-        void testSaveAndFindByKey() {
+    PaymentCommand command =
+        new PaymentCommand(
+            from.accountId(),
+            to.accountId(),
+            new Money(BigDecimal.valueOf(5), Currency.getInstance("EUR")),
+            "REFERENCE",
+            key);
 
-                PaymentCommand command = new PaymentCommand(
-                                from.accountId(),
-                                to.accountId(),
-                                new Money(BigDecimal.valueOf(5), Currency.getInstance("EUR")),
-                                "REFERENCE",
-                                key);
+    Idempotency idempotency = new Idempotency(key, utils.hash(command), PAYLOAD, Instant.now());
 
-                Idempotency idempotency = new Idempotency(
-                                key,
-                                utils.hash(command),
-                                PAYLOAD,
-                                Instant.now());
-
-                StepVerifier.create(idempotencyRepository.save(idempotency).then(idempotencyRepository.findByKey(key)))
-                                .assertNext(found -> {
-                                        assertThat(found.key()).isEqualTo(key);
-                                        assertThat(found.requestHash()).isEqualTo(utils.hash(command));
-                                        assertThat(found.responsePayload()).isEqualTo(PAYLOAD);
-                                        assertThat(found.createdAt()).isEqualTo(idempotency.createdAt());
-
-                                });
-
-        }
+    StepVerifier.create(
+            idempotencyRepository.save(idempotency).then(idempotencyRepository.findByKey(key)))
+        .assertNext(
+            found -> {
+              assertThat(found.key()).isEqualTo(key);
+              assertThat(found.requestHash()).isEqualTo(utils.hash(command));
+              assertThat(found.responsePayload()).isEqualTo(PAYLOAD);
+              assertThat(found.createdAt()).isEqualTo(idempotency.createdAt());
+            });
+  }
 }

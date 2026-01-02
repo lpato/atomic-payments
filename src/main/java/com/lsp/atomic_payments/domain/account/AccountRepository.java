@@ -5,12 +5,11 @@ import reactor.core.publisher.Mono;
 
 public interface AccountRepository {
 
-    Mono<Account> findById(AccountId accountId);
+  Mono<Account> findById(AccountId accountId);
 
-    Mono<Account> save(Account account);
+  Mono<Account> save(Account account);
 
-    Mono<Account> update(Account account);
+  Mono<Account> update(Account account);
 
-    Flux<Account> findAll();
-
+  Flux<Account> findAll();
 }

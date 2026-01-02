@@ -4,8 +4,7 @@ import reactor.core.publisher.Mono;
 
 public interface PaymentRepository {
 
-    Mono<Payment> findById(PaymentId paymentId);
+  Mono<Payment> findById(PaymentId paymentId);
 
-    Mono<Payment> save(Payment payment);
-
+  Mono<Payment> save(Payment payment);
 }

@@ -5,10 +5,9 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record PaymentInitiatedEvent(
-                UUID paymentId,
-                UUID fromAccountId,
-                UUID toAccountId,
-                BigDecimal amount,
-                String currency,
-                Instant createdAt) {
-}
+    UUID paymentId,
+    UUID fromAccountId,
+    UUID toAccountId,
+    BigDecimal amount,
+    String currency,
+    Instant createdAt) {}

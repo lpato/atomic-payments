@@ -6,6 +6,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.lsp.atomic_payments.application.payment.IdempotentPaymentService;
+import com.lsp.atomic_payments.application.payment.PaymentInitiatedEvent;
+import com.lsp.atomic_payments.application.payment.PaymentService;
+import com.lsp.atomic_payments.domain.payment.Payment;
+import com.lsp.atomic_payments.domain.payment.PaymentCommand;
+import com.lsp.atomic_payments.domain.payment.PaymentTestFixture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,14 +22,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.ReactiveTransaction;
 import org.springframework.transaction.reactive.TransactionCallback;
 import org.springframework.transaction.reactive.TransactionalOperator;
-
-import com.lsp.atomic_payments.application.payment.IdempotentPaymentService;
-import com.lsp.atomic_payments.application.payment.PaymentInitiatedEvent;
-import com.lsp.atomic_payments.application.payment.PaymentService;
-import com.lsp.atomic_payments.domain.payment.Payment;
-import com.lsp.atomic_payments.domain.payment.PaymentCommand;
-import com.lsp.atomic_payments.domain.payment.PaymentTestFixture;
-
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -31,94 +29,76 @@ import reactor.test.StepVerifier;
 @ExtendWith(MockitoExtension.class)
 class IdempotentPaymentServiceTest {
 
-    @Mock
-    PaymentService paymentService;
+  @Mock PaymentService paymentService;
 
-    @Mock
-    IdempotencyRepository idempotencyRepository;
+  @Mock IdempotencyRepository idempotencyRepository;
 
-    @Mock
-    TransactionalOperator transactionalOperator;
+  @Mock TransactionalOperator transactionalOperator;
 
-    @Mock
-    IdempotencyUtils utils;
+  @Mock IdempotencyUtils utils;
 
-    @InjectMocks
-    IdempotentPaymentService service;
+  @InjectMocks IdempotentPaymentService service;
 
-    @Mock
-    ApplicationEventPublisher eventPublisher;
+  @Mock ApplicationEventPublisher eventPublisher;
 
-    @BeforeEach
-    void setUp() {
+  @BeforeEach
+  void setUp() {
 
-        when(transactionalOperator.execute(any()))
-                .thenAnswer(invocation -> {
-                    TransactionCallback<Payment> callback = invocation.getArgument(0);
-                    return Flux.from(callback.doInTransaction(mock(ReactiveTransaction.class)));
-                });
+    when(transactionalOperator.execute(any()))
+        .thenAnswer(
+            invocation -> {
+              TransactionCallback<Payment> callback = invocation.getArgument(0);
+              return Flux.from(callback.doInTransaction(mock(ReactiveTransaction.class)));
+            });
+  }
 
-    }
+  @Test
+  void initiate_shouldExecuteAndStore_whenNoExistingRecord() {
 
-    @Test
-    void initiate_shouldExecuteAndStore_whenNoExistingRecord() {
+    PaymentCommand command = mock(PaymentCommand.class);
+    Payment payment = PaymentTestFixture.validPayment();
 
-        PaymentCommand command = mock(PaymentCommand.class);
-        Payment payment = PaymentTestFixture.validPayment();
+    when(paymentService.initiatePayment(any())).thenReturn(Mono.just(mock(Payment.class)));
 
-        when(paymentService.initiatePayment(any()))
-                .thenReturn(Mono.just(mock(Payment.class)));
+    when(command.idempotencyKey()).thenReturn("key-1");
 
-        when(command.idempotencyKey()).thenReturn("key-1");
+    // no existing record
+    when(idempotencyRepository.findByKey("key-1")).thenReturn(Mono.empty());
 
-        // no existing record
-        when(idempotencyRepository.findByKey("key-1"))
-                .thenReturn(Mono.empty());
+    // create payment
+    when(paymentService.initiatePayment(command)).thenReturn(Mono.just(payment));
 
-        // create payment
-        when(paymentService.initiatePayment(command))
-                .thenReturn(Mono.just(payment));
+    when(utils.hash(command)).thenReturn("hash");
+    when(utils.serialize(payment)).thenReturn("payload");
 
-        when(utils.hash(command)).thenReturn("hash");
-        when(utils.serialize(payment)).thenReturn("payload");
+    // store idempotency record
+    when(idempotencyRepository.save(any())).thenReturn(Mono.empty());
 
-        // store idempotency record
-        when(idempotencyRepository.save(any()))
-                .thenReturn(Mono.empty());
+    StepVerifier.create(service.initiate(command)).expectNext(payment).verifyComplete();
 
-        StepVerifier.create(service.initiate(command))
-                .expectNext(payment)
-                .verifyComplete();
+    verify(eventPublisher).publishEvent(any(PaymentInitiatedEvent.class));
+  }
 
-        verify(eventPublisher).publishEvent(any(PaymentInitiatedEvent.class));
+  @Test
+  void inititate_shouldReturnExisting_whenRecordExists() {
 
-    }
+    PaymentCommand command = mock(PaymentCommand.class);
+    Idempotency idempotency = mock(Idempotency.class);
+    Payment payment = PaymentTestFixture.validPayment();
 
-    @Test
-    void inititate_shouldReturnExisting_whenRecordExists() {
+    when(command.idempotencyKey()).thenReturn("key-1");
+    when(idempotencyRepository.findByKey("key-1")).thenReturn(Mono.just(idempotency));
+    when(utils.hash(command)).thenReturn("hash");
+    when(idempotency.requestHash()).thenReturn("hash");
 
-        PaymentCommand command = mock(PaymentCommand.class);
-        Idempotency idempotency = mock(Idempotency.class);
-        Payment payment = PaymentTestFixture.validPayment();
+    String payload = "serialized-payment";
+    when(idempotency.responsePayload()).thenReturn(payload);
+    when(utils.deserialize(payload)).thenReturn(payment);
 
-        when(command.idempotencyKey()).thenReturn("key-1");
-        when(idempotencyRepository.findByKey("key-1"))
-                .thenReturn(Mono.just(idempotency));
-        when(utils.hash(command)).thenReturn("hash");
-        when(idempotency.requestHash()).thenReturn("hash");
+    StepVerifier.create(service.initiate(command)).expectNext(payment).verifyComplete();
 
-        String payload = "serialized-payment";
-        when(idempotency.responsePayload()).thenReturn(payload);
-        when(utils.deserialize(payload)).thenReturn(payment);
-
-        StepVerifier.create(service.initiate(command))
-                .expectNext(payment)
-                .verifyComplete();
-
-        verify(paymentService, never()).initiatePayment(any());
-        verify(idempotencyRepository, never()).save(any());
-        verify(eventPublisher, never()).publishEvent(any());
-
-    }
-
+    verify(paymentService, never()).initiatePayment(any());
+    verify(idempotencyRepository, never()).save(any());
+    verify(eventPublisher, never()).publishEvent(any());
+  }
 }
