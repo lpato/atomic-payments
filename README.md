@@ -18,6 +18,7 @@ The project is intentionally small but **architecturally complete**, focusing on
 - [Tech Stack](#-tech-stack)
 - [Scope & Intent](#-scope--intent)
 - [Key Takeaways](#-key-takeaways)
+- [Getting Started](#-getting-started)
 
 
 ## ✨ Key Features
@@ -230,6 +231,80 @@ Idempotency is a protocol concern, not a domain concern
 Reactive systems require explicit transaction & error handling
 
 Correctness beats complexity
+
+## Getting Started
+
+Prerequisites
+
+- Java 17+
+- Docker & Docker Compose
+- Maven
+
+```bash
+# The project uses PostgreSQL. A Docker Compose file is provided.
+
+docker compose up -d
+
+```
+- This will start a PostgreSQL instance and expose it on localhost:5432.
+- Flyway migrations run automatically on application startup.
+- No manual steps required.
+
+```bash
+./mvnw spring-boot:run
+```
+The application starts on http://localhost:8080
+
+```bash
+curl -X POST http://localhost:8080/payments \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: demo-123" \
+  -d '{
+        "fromAccountId": "UUID",
+        "toAccountId": "UUID",
+        "amount": 20,
+        "currency": "EUR",
+        "reference": "demo-payment"
+      }'
+```
+**Note:** Accounts must exist before creating a payment.
+They can be inserted directly into the database for testing purposes.
+
+```
+INSERT INTO accounts (
+    id,
+    owner,
+    balance_amount,
+    balance_currency,
+    status,
+    version,
+    created_at
+) VALUES
+(
+    '11111111-1111-1111-1111-111111111111',
+    'from',
+    1000.00,
+    'EUR',
+    'ACTIVE',
+    0,
+    now()
+),
+(
+    '22222222-2222-2222-2222-222222222222',
+    'to',
+    500.00,
+    'EUR',
+    'ACTIVE',
+    0,
+    now()
+);
+```
+- The service is intentionally minimal and does not expose full account CRUD APIs
+
+- Messaging is implemented using Spring application events and can be extended to Kafka or similar systems
+
+- The focus of the project is correctness and transactional safety rather than feature completeness
+
 
 
 ---
